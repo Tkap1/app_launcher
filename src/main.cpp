@@ -91,34 +91,8 @@ global b8 g_window_shown = false;
 
 global int app_state = 0;
 
-
-#define start_in_folder(folder, exe) "start \"\" /d \""folder"\" \""exe"\""
-
-global constexpr s_element c_elements[] = {
-	{.name = "compile_cmd", .exec = "start cmd /k \"title compile_cmd && go game && shell\""},
-	{.type = 1, .name = "deepl: spanish -> english", .exec = "explorer \"https://www.deepl.com/en/translator#es/en/%s\""},
-	{.type = 1, .name = "deepl: english -> spanish", .exec = "explorer \"https://www.deepl.com/en/translator#en/es/%s\""},
-	{.name = "excalidraw", .exec = "explorer \"https://excalidraw.com\""},
-	{.type = 1, .name = "youtube search", .exec = "explorer \"https://www.youtube.com/results?search_query=%s before:2200\""},
-	{.name = "open c folder", .exec = "explorer \"C:\\Users\\34687\\Desktop\\Dev\\C\""},
-	{.name = "open game folder", .exec = "explorer \"C:\\Users\\34687\\Desktop\\Dev\\C\\new_raylib\""},
-	{.name = "open game code", .exec = "code \"C:\\Users\\34687\\Desktop\\Dev\\C\\new_raylib\""},
-	{.name = "open this code", .exec = "code \"C:\\Users\\34687\\Desktop\\Dev\\C\\app_launcher\""},
-	{.name = "open bot code", .exec = "code \"C:\\Users\\34687\\Desktop\\Dev\\Python\\twitch_bot\""},
-	{.name = "compile this", .exec = "start cmd /k \"cd C:\\Users\\34687\\Desktop\\Dev\\C\\app_launcher && build.bat && exit\""},
-	{.name = "explorer this", .exec = "explorer \"C:\\Users\\34687\\Desktop\\Dev\\C\\app_launcher\""},
-	{.name = "explorer global", .exec = "explorer \"C:\\Users\\34687\\Desktop\\Global\""},
-	{.name = "sharex", .exec = start_in_folder("C:\\Users\\34687\\Desktop\\Apps\\ShareX-15.0.0-portable", "C:\\Users\\34687\\Desktop\\Apps\\ShareX-15.0.0-portable\\ShareX.exe")},
-	{.name = "obs", .exec = start_in_folder("C:\\Program Files\\obs-studio\\bin\\64bit", "C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe")},
-	{.name = "ditto", .exec = start_in_folder("C:\\Users\\34687\\Desktop\\Apps\\Ditto", "C:\\Users\\34687\\Desktop\\Apps\\Ditto\\Ditto.exe")},
-	{.name = "restart bot", .exec = "taskkill /F /IM py.exe & start \"\" /d \"C:\\Users\\34687\\Desktop\\Dev\\Python\\twitch_bot\" \"C:\\Users\\34687\\Desktop\\Dev\\Python\\twitch_bot\\src\\main.py\""},
-	{.name = "restart chat overlay", .exec = "taskkill /F /IM node.exe & \"C:\\Users\\34687\\Desktop\\open_athano_chat.bat\""},
-	{.name = "edit path", .exec = "rundll32.exe sysdm.cpl,EditEnvironmentVariables"},
-	{.name = "stream setup", .exec = "C:\\Users\\34687\\Desktop\\stream_setup.bat"},
-	{.name = "run scripts", .exec = "C:\\Users\\34687\\Desktop\\run_scripts.bat"},
-};
-global constexpr int c_element_count = array_count(c_elements);
-global float g_element_times[c_element_count] = zero;
+global s_sarray<s_element, 128> g_elements;
+global float g_element_times[128] = zero;
 
 #include "ui.cpp"
 #include "draw.cpp"
@@ -350,6 +324,8 @@ int main(int argc, char** argv)
 
 	wglSwapIntervalEXT(1);
 
+	b8 read_json = true;
+
 	f64 before = 0;
 	// vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv		frame start start		vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 	while(running) {
@@ -388,6 +364,33 @@ int main(int argc, char** argv)
 		// 	play_sound(xaudio.pop);
 		// }
 
+		if(read_json) {
+			read_json = false;
+			g_elements.count = 0;
+			char* text = read_file_quick("data.json", &g_arena);
+			assert(text);
+			s_json* json = parse_json(text);
+			assert(json);
+			json = json->object;
+			for(s_json* j = json; j; j = j->next) {
+				s_element e = zero;
+				e.name = j->key;
+				e.type = json_get(j->object, "type", e_json_string)->str;
+				e.path = json_get(j->object, "path", e_json_string)->str;
+				{
+					s_json* temp = json_get(j->object, "requires_input", e_json_bool);
+					e.requires_input = temp && temp->bool_val;
+				}
+				{
+					s_json* temp = json_get(j->object, "working_dir", e_json_string);
+					if(temp) {
+						e.working_dir = temp->str;
+					}
+				}
+				g_elements.add(e);
+			}
+		}
+
 		// vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv		app update start		vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 		{
 			e_string_input_result input_result = zero;
@@ -398,21 +401,22 @@ int main(int argc, char** argv)
 					if(input_result == e_string_input_result_cancel) {
 						hide_window();
 					}
-					s_sarray<s_score_and_index, c_element_count> sorted_elements = zero;
+					s_score_and_index* sorted_elements = (s_score_and_index*)calloc(1, sizeof(s_element) * g_elements.count);
+					int sorted_elements_count = 0;
 					int min_score = 0;
 					if(input_str.len > 0) { min_score = 1; }
-					for(int i = 0; i < c_element_count; i++) {
-						int score = string_similarity(input_str.data, c_elements[i].name);
+					for(int i = 0; i < g_elements.count; i++) {
+						int score = string_similarity(input_str.data, g_elements[i].name);
 						if(score >= min_score) {
-							sorted_elements.add({.score = score, .index = i});
+							arr_add(sorted_elements, {.score = score, .index = i}, &sorted_elements_count);
 						}
 					}
-					qsort(sorted_elements.elements, sorted_elements.count, sizeof(*sorted_elements.elements), qsort_files);
+					qsort(sorted_elements, sorted_elements_count, sizeof(s_score_and_index), qsort_files);
 
 					s_rect elements_rect = make_rect_points(0.25f, 0.15f, 0.75f, 0.95f, g_window_size);
 					float big_font_size = g_font_arr[e_font_big].size;
 					draw_search_bar2(&input_str, v2(elements_rect.center_x(), elements_rect.pos.y - big_font_size), e_font_big, 1);
-					if(sorted_elements.count > 0) {
+					if(sorted_elements_count > 0) {
 						if(is_key_pressed(key_down)) {
 							element_selected += 1;
 						}
@@ -420,9 +424,9 @@ int main(int argc, char** argv)
 							element_selected -= 1;
 						}
 					}
-					element_selected = circular_index(element_selected, sorted_elements.count);
+					element_selected = circular_index(element_selected, sorted_elements_count);
 
-					if(sorted_elements.count > 0) {
+					if(sorted_elements_count > 0) {
 						int temp = sorted_elements[element_selected].index;
 						if(prev_element_selected != temp) {
 							play_sound(xaudio.pop);
@@ -442,31 +446,42 @@ int main(int argc, char** argv)
 					scroll_v = lerp_snap(scroll_v, target_scroll_v, delta * 15, 1.0f);
 
 					s_v2 element_pos = elements_rect.pos + elements_rect.size * v2(0.5f, 0.0f);
-					if(sorted_elements.count > 0) {
-						foreach_val(ias_i, ias, sorted_elements) {
+					if(sorted_elements_count > 0) {
+						for(int ias_i = 0; ias_i < sorted_elements_count; ias_i += 1) {
+							s_score_and_index ias = sorted_elements[ias_i];
+
 							element_pos.y += element_spacing;
-							s_element element = c_elements[ias.index];
+							s_element element = g_elements[ias.index];
 							// s_v4 color = rgb(0xD56D3D);
 							b8 selected = ias_i == element_selected;
 							if(selected) {
 								add_clamp(&g_element_times[ias.index], 0, 1, delta * 4);
 								// color = brighter(rgb(0xF49D51), 1.2f);
 								if(input_result == e_string_input_result_submit) {
-									switch(element.type) {
-										case 0: {
-											input_str.clear();
-											hide_window();
-											assert(element.exec);
-											system(element.exec);
-										} break;
-
-										case 1: {
+									if(strcmp(element.type, "explorer") == 0) {
+										if(element.requires_input) {
 											app_state = 1;
 											state1_data = zero;
 											state1_data.element = element;
 											state1_data.input_str = make_input_str<MAX_PATH - 1>();
-										} break;
-										invalid_default_case;
+										}
+										else {
+											input_str.clear();
+											hide_window();
+											char* result = format_text("explorer \"%s\"", element.path);
+											system(result);
+										}
+									}
+									else if(strcmp(element.type, "run") == 0) {
+										input_str.clear();
+										hide_window();
+										system(element.path);
+									}
+									else if(strcmp(element.type, "run_in_folder") == 0) {
+										input_str.clear();
+										hide_window();
+										char* result = format_text("start \"\" /d \"%s\" \"%s\"", element.working_dir, element.path);
+										system(result);
 									}
 								}
 							}
@@ -494,6 +509,9 @@ int main(int argc, char** argv)
 							);
 						}
 					}
+					if(sorted_elements) {
+						free(sorted_elements);
+					}
 
 				} break;
 
@@ -511,8 +529,11 @@ int main(int argc, char** argv)
 					s_v2 size = g_window_size * v2(0.5f, 0.5f);
 					draw_search_bar(&state1_data.input_str, pos - v2(size.x * 0.5f, size.y * 0.5f + g_font_arr[e_font_medium].size), v2(size.x, g_font_arr[e_font_medium].size), e_font_medium, true, 3);
 					if(specific_app_input_result == e_string_input_result_submit) {
-						char* temp = format_text(state1_data.element.exec, state1_data.input_str.data);
-						system(temp);
+						s_element e = state1_data.element;
+						assert(strcmp(e.type2, "explorer") == 0);
+						char* temp = format_text(e.path, state1_data.input_str.data);
+						char* result = format_text("explorer \"%s\"", temp);
+						system(result);
 						hide_window();
 					}
 
@@ -1136,4 +1157,11 @@ func t do_interp(float time, s_value_interp<t>* value_arr, int value_count)
 	s_value_interp left_val = value_arr[left];
 	s_value_interp right_val = value_arr[right];
 	return lerp(left_val.color, right_val.color, ilerp(left_val.time, right_val.time, time));
+}
+
+template <typename t>
+func void arr_add(t* arr, t element, int* count)
+{
+	arr[*count] = element;
+	*count += 1;
 }

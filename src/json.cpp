@@ -79,7 +79,7 @@ func s_json* parse_json_object(char** out_str)
 		str += 4;
 	}
 	else if(*str == '"') {
-		s_string_parse parse = parse_string(str, true);
+		s_string_parse parse = parse_string(str);
 		assert(parse.success);
 		str = parse.continuation;
 		result = (s_json*)calloc(1, sizeof(*result));
@@ -200,27 +200,63 @@ func s_json* json_get(s_json* json, char* key_name, e_json in_type)
 	return NULL;
 }
 
-func s_string_parse parse_string(char* str, b8 do_alloc)
+// func s_string_parse parse_string(char* str, b8 do_alloc)
+// {
+// 	s_string_parse result = {};
+// 	if(*str != '"') { return {}; }
+// 	str += 1;
+// 	result.first_char = str;
+// 	while(true) {
+// 		if(*str == '\0') { return {}; }
+// 		else if(*str == '"' && str[-1] != '\\') {
+// 			result.success = true;
+// 			result.last_char = str - 1;
+// 			result.len = (int)(result.last_char - result.first_char) + 1;
+// 			result.continuation = str + 1;
+// 			if(do_alloc && result.last_char >= result.first_char) {
+// 				result.result = (char*)malloc(result.len + 1);
+// 				memcpy(result.result, result.first_char, result.len);
+// 				result.result[result.len] = 0;
+// 			}
+// 			break;
+// 		}
+// 		else { str += 1; }
+// 	}
+// 	return result;
+// }
+
+func s_string_parse parse_string(char* str)
 {
 	s_string_parse result = {};
 	if(*str != '"') { return {}; }
+	int len = (int)strlen(str);
+	result.result = (char*)calloc(1, len + 1);
 	str += 1;
 	result.first_char = str;
+	char prev_c = 0;
 	while(true) {
-		if(*str == '\0') { return {}; }
-		else if(*str == '"' && str[-1] != '\\') {
-			result.success = true;
+		char c = str[0];
+		if(!c) { break; }
+		char next_c = str[1];
+		if(c == '"' && prev_c != '\\') {
+			// @TODO(tkap, 15/07/2024): empty string issue?
 			result.last_char = str - 1;
-			result.len = (int)(result.last_char - result.first_char) + 1;
 			result.continuation = str + 1;
-			if(do_alloc && result.last_char >= result.first_char) {
-				result.result = (char*)malloc(result.len + 1);
-				memcpy(result.result, result.first_char, result.len);
-				result.result[result.len] = 0;
-			}
+			result.success = true;
 			break;
 		}
-		else { str += 1; }
+		else if(c == '\\') {
+			str += 2;
+			result.result[result.len] = next_c;
+			result.len += 1;
+			prev_c = next_c;
+		}
+		else {
+			result.result[result.len] = c;
+			result.len += 1;
+			str += 1;
+			prev_c = c;
+		}
 	}
 	return result;
 }

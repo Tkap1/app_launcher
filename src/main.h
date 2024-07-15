@@ -4,9 +4,11 @@ typedef m_element_func(t_element_func);
 
 struct s_element
 {
-	int type;
 	char* name;
-	char* exec;
+	char* type;
+	char* path;
+	char* working_dir;
+	b8 requires_input;
 	t_element_func element_func;
 };
 
@@ -264,3 +266,6 @@ int qsort_files(const void* a, const void* b)
 
 template <typename t>
 func t do_interp(float time, s_value_interp<t>* value_arr, int value_count);
+
+template <typename t>
+func void arr_add(t* arr, t element, int* count);

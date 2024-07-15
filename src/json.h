@@ -40,4 +40,5 @@ struct s_json
 func s_json* parse_json(char* str);
 func void print_json(s_json* json, int indentation);
 func s_json* json_get(s_json* json, char* key_name, e_json in_type);
-func s_string_parse parse_string(char* str, b8 do_alloc);
+// func s_string_parse parse_string(char* str, b8 do_alloc);
+func s_string_parse parse_string(char* str);

@@ -1,6 +1,96 @@
 {
 	"open c folder": {
-		"type": "open_folder",
+		"type": "explorer",
 		"path": "C:\\Users\\34687\\Desktop\\Dev\\C"
+	},
+	"open game folder": {
+		"type": "explorer",
+		"path": "C:\\Users\\34687\\Desktop\\Dev\\C\\new_raylib"
+	},
+	"explorer this": {
+		"type": "explorer",
+		"path": "C:\\Users\\34687\\Desktop\\Dev\\C\\app_launcher"
+	},
+	"explorer global": {
+		"type": "explorer",
+		"path": "C:\\Users\\34687\\Desktop\\Global"
+	},
+	"compile_cmd": {
+		"type": "run",
+		"path": "start cmd /k \"title compile_cmd && go game && shell\""
+	},
+	"open game code": {
+		"type": "run",
+		"path": "code \"C:\\Users\\34687\\Desktop\\Dev\\C\\new_raylib\""
+	},
+	"open this code": {
+		"type": "run",
+		"path": "code \"C:\\Users\\34687\\Desktop\\Dev\\C\\app_launcher\""
+	},
+	"open bot code": {
+		"type": "run",
+		"path": "code \"C:\\Users\\34687\\Desktop\\Dev\\Python\\twitch_bot\""
+	},
+	"add command": {
+		"type": "run",
+		"path": "code \"C:\\Users\\34687\\Desktop\\Dev\\C\\app_launcher\\data.json\""
+	},
+	"compile this": {
+		"type": "run",
+		"path": "start cmd /k \"cd C:\\Users\\34687\\Desktop\\Dev\\C\\app_launcher && build.bat && exit\""
+	},
+	"restart bot": {
+		"type": "run",
+		"path": "taskkill /F /IM py.exe & start \"\" /d \"C:\\Users\\34687\\Desktop\\Dev\\Python\\twitch_bot\" \"C:\\Users\\34687\\Desktop\\Dev\\Python\\twitch_bot\\src\\main.py\""
+	},
+	"restart chat overlay": {
+		"type": "run",
+		"path": "taskkill /F /IM node.exe & \"C:\\Users\\34687\\Desktop\\open_athano_chat.bat\""
+	},
+	"edit path": {
+		"type": "run",
+		"path": "rundll32.exe sysdm.cpl,EditEnvironmentVariables"
+	},
+	"stream setup": {
+		"type": "run",
+		"path": "C:\\Users\\34687\\Desktop\\stream_setup.bat"
+	},
+	"run scripts": {
+		"type": "run",
+		"path": "C:\\Users\\34687\\Desktop\\run_scripts.bat"
+	},
+	"deepl: spanish -> english": {
+		"type": "explorer",
+		"requires_input": true,
+		"path": "https://www.deepl.com/en/translator#es/en/%s"
+	},
+	"deepl: english -> spanish": {
+		"type": "explorer",
+		"requires_input": true,
+		"path": "https://www.deepl.com/en/translator#en/es/%s"
+	},
+	"excalidraw": {
+		"type": "explorer",
+		"path": "https://excalidraw.com"
+	},
+	"youtube search": {
+		"type": "explorer",
+		"requires_input": true,
+		"path": "https://www.youtube.com/results?search_query=%s before:2200"
+	},
+	"ShareX": {
+		"type": "run_in_folder",
+		"working_dir": "C:\\Users\\34687\\Desktop\\Apps\\ShareX-15.0.0-portable",
+		"path": "C:\\Users\\34687\\Desktop\\Apps\\ShareX-15.0.0-portable\\ShareX.exe"
+	},
+	"OBS": {
+		"type": "run_in_folder",
+		"working_dir": "C:\\Program Files\\obs-studio\\bin\\64bit",
+		"path": "C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe"
+	},
+	"Ditto": {
+		"type": "run_in_folder",
+		"working_dir": "C:\\Users\\34687\\Desktop\\Apps\\Ditto",
+		"path": "C:\\Users\\34687\\Desktop\\Apps\\Ditto\\Ditto.exe"
 	}
 }
