@@ -1,0 +1,85 @@
+
+
+layout(std430, binding = 0) buffer buffer_name
+{
+	s_transform transforms[];
+};
+
+out vec2 v_local_uv;
+out vec2 v_uv;
+out flat s_transform v_t;
+
+uniform vec2 window_size;
+
+float range_lerp(float val, float amin, float amax, float bmin, float bmax)
+{
+	float p = (val - amin) / (amax - amin);
+	return bmin + (bmax - bmin) * p;
+}
+
+void main()
+{
+
+	float v_size = 1.0;
+	vec2 vertices[] = {
+		vec2(-v_size, v_size),
+		vec2(v_size, v_size),
+		vec2(v_size, -v_size),
+		vec2(-v_size, v_size),
+		vec2(v_size, -v_size),
+		vec2(-v_size, -v_size),
+	};
+
+	vec2 local_uv[] = {
+		vec2(0, 0),
+		vec2(1, 0),
+		vec2(1, 1),
+		vec2(0, 0),
+		vec2(1, 1),
+		vec2(0, 1),
+	};
+
+	s_transform t = transforms[gl_InstanceID];
+
+	float min_uv_x = t.flip_x ? t.uv_max.x : t.uv_min.x;
+	float max_uv_x = t.flip_x ? t.uv_min.x : t.uv_max.x;
+	vec2 topleft = vec2(
+		min_uv_x,
+		t.uv_min.y
+	);
+	vec2 topright = vec2(
+		max_uv_x,
+		t.uv_min.y
+	);
+	vec2 bottomright = vec2(
+		max_uv_x,
+		t.uv_max.y
+	);
+	vec2 bottomleft = vec2(
+		min_uv_x,
+		t.uv_max.y
+	);
+
+	vec2 uvs[] = {
+		topleft,
+		topright,
+		bottomright,
+		topleft,
+		bottomright,
+		bottomleft,
+	};
+
+	vec2 pos = t.pos * (2 / window_size) - 1;
+	pos.y *= -1;
+	vec2 size = t.draw_size / window_size;
+
+	v_t = t;
+
+	// float z = range_lerp(t.layer, 0, 1000, 0, 1);
+	float z = t.layer / 100.0;
+	z += t.sublayer / 4.0 / 100.0;
+
+	v_uv = uvs[gl_VertexID];
+	v_local_uv = local_uv[gl_VertexID];
+	gl_Position = vec4((vertices[gl_VertexID] + t.origin_offset) * size + pos, z, 1);
+}

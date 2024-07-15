@@ -1,0 +1,57 @@
+
+layout(origin_upper_left) in vec4 gl_FragCoord;
+
+in flat s_transform v_t;
+in vec2 v_uv;
+in vec2 v_local_uv;
+
+
+out vec4 out_color;
+
+layout (location = 0) uniform sampler2D in_texture;
+
+vec4 pma(vec4 col)
+{
+	return vec4(col.rgb * col.a, col.a);
+}
+
+bool point_in_rect_topleft(vec2 point, vec2 pos, vec2 size)
+{
+	return point.x >= pos.x && point.x <= pos.x + size.x && point.y >= pos.y && point.y <= pos.y + size.y;
+}
+
+void main()
+{
+	s_transform t = v_t;
+
+	if(t.do_clip)
+	{
+		// vec2 pos = t.pos + t.draw_size * v_local_uv;
+		if(!point_in_rect_topleft(gl_FragCoord.xy, t.clip_pos, t.clip_size)) { discard; }
+	}
+
+	vec4 color;
+	if(t.use_texture)
+	{
+		color = texture(in_texture, v_uv) * pma(t.color);
+	}
+	else
+	{
+		color = t.color;
+		// float ar = t.draw_size.y / t.draw_size.x;
+		// if(
+		// 	v_local_uv.x < 0.1 * ar || v_local_uv.y < 0.1 ||
+		// 	v_local_uv.x > 1.0 - (0.1 * ar) || v_local_uv.y > 0.9
+		// )
+		// {
+		// 	color.rgb *= 0.9;
+		// }
+	}
+
+	color.rgb = mix(color.rgb, t.mix_color.rgb, t.mix_weight);
+
+	if(color.a <= 0) { discard; }
+
+	out_color = color;
+}
+
