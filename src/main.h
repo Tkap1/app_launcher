@@ -2,12 +2,14 @@
 #define m_element_func(name) void name(void);
 typedef m_element_func(t_element_func);
 
+global constexpr int c_max_steps = 4;
+
 struct s_element
 {
 	char* name;
-	char* type;
-	char* path;
-	char* working_dir;
+	s_sarray<char*, c_max_steps> type;
+	s_sarray<char*, c_max_steps> path;
+	s_sarray<char*, c_max_steps> working_dir;
 	b8 requires_input;
 	t_element_func element_func;
 };

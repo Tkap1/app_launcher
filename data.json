@@ -40,12 +40,13 @@
 		"path": "start cmd /k \"cd C:\\Users\\34687\\Desktop\\Dev\\C\\app_launcher && build.bat && exit\""
 	},
 	"restart bot": {
-		"type": "run",
-		"path": "taskkill /F /IM py.exe & start \"\" /d \"C:\\Users\\34687\\Desktop\\Dev\\Python\\twitch_bot\" \"C:\\Users\\34687\\Desktop\\Dev\\Python\\twitch_bot\\src\\main.py\""
+		"type": ["run", "run_in_folder"],
+		"working_dir": ["", "C:\\Users\\34687\\Desktop\\Dev\\Python\\twitch_bot"],
+		"path": ["taskkill /F /IM py.exe", "C:\\Users\\34687\\Desktop\\Dev\\Python\\twitch_bot\\src\\main.py"]
 	},
 	"restart chat overlay": {
-		"type": "run",
-		"path": "taskkill /F /IM node.exe & \"C:\\Users\\34687\\Desktop\\open_athano_chat.bat\""
+		"type": ["run", "run"],
+		"path": ["taskkill /F /IM node.exe", "C:\\Users\\34687\\Desktop\\open_athano_chat.bat"]
 	},
 	"edit path": {
 		"type": "run",

@@ -1,4 +1,6 @@
 
+#define for_json(a, b) for(s_json* a = b; a; a = a->next)
+
 enum e_json
 {
 	e_json_object,

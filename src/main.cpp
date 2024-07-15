@@ -372,20 +372,59 @@ int main(int argc, char** argv)
 			s_json* json = parse_json(text);
 			assert(json);
 			json = json->object;
-			for(s_json* j = json; j; j = j->next) {
+			for_json(j, json) {
 				s_element e = zero;
 				e.name = j->key;
-				e.type = json_get(j->object, "type", e_json_string)->str;
-				e.path = json_get(j->object, "path", e_json_string)->str;
 				{
-					s_json* temp = json_get(j->object, "requires_input", e_json_bool);
-					e.requires_input = temp && temp->bool_val;
+					s_json* temp = json_get(j->object, "type", e_json_string);
+					if(temp) {
+						e.type.add(temp->str);
+					}
+					else {
+						temp = json_get(j->object, "type", e_json_array);
+						if(temp) {
+							for_json(j2, temp->array) {
+								e.type.add(j2->str);
+							}
+						}
+					}
 				}
+				assert(e.type.count > 0);
+
+				{
+					s_json* temp = json_get(j->object, "path", e_json_string);
+					if(temp) {
+						e.path.add(temp->str);
+					}
+					else {
+						temp = json_get(j->object, "path", e_json_array);
+						if(temp) {
+							for_json(j2, temp->array) {
+								e.path.add(j2->str);
+							}
+						}
+					}
+				}
+				assert(e.path.count > 0);
+
 				{
 					s_json* temp = json_get(j->object, "working_dir", e_json_string);
 					if(temp) {
-						e.working_dir = temp->str;
+						e.working_dir.add(temp->str);
 					}
+					else {
+						temp = json_get(j->object, "working_dir", e_json_array);
+						if(temp) {
+							for_json(j2, temp->array) {
+								e.working_dir.add(j2->str);
+							}
+						}
+					}
+				}
+
+				{
+					s_json* temp = json_get(j->object, "requires_input", e_json_bool);
+					e.requires_input = temp && temp->bool_val;
 				}
 				g_elements.add(e);
 			}
@@ -458,30 +497,33 @@ int main(int argc, char** argv)
 								add_clamp(&g_element_times[ias.index], 0, 1, delta * 4);
 								// color = brighter(rgb(0xF49D51), 1.2f);
 								if(input_result == e_string_input_result_submit) {
-									if(strcmp(element.type, "explorer") == 0) {
-										if(element.requires_input) {
-											app_state = 1;
-											state1_data = zero;
-											state1_data.element = element;
-											state1_data.input_str = make_input_str<MAX_PATH - 1>();
+									for(int step_i = 0; step_i < element.type.count; step_i += 1) {
+
+										if(strcmp(element.type[step_i], "explorer") == 0) {
+											if(element.requires_input) {
+												app_state = 1;
+												state1_data = zero;
+												state1_data.element = element;
+												state1_data.input_str = make_input_str<MAX_PATH - 1>();
+											}
+											else {
+												input_str.clear();
+												hide_window();
+												char* result = format_text("explorer \"%s\"", element.path);
+												system(result);
+											}
 										}
-										else {
+										else if(strcmp(element.type[step_i], "run") == 0) {
 											input_str.clear();
 											hide_window();
-											char* result = format_text("explorer \"%s\"", element.path);
+											system(element.path[step_i]);
+										}
+										else if(strcmp(element.type[step_i], "run_in_folder") == 0) {
+											input_str.clear();
+											hide_window();
+											char* result = format_text("start \"\" /d \"%s\" \"%s\"", element.working_dir[step_i], element.path[step_i]);
 											system(result);
 										}
-									}
-									else if(strcmp(element.type, "run") == 0) {
-										input_str.clear();
-										hide_window();
-										system(element.path);
-									}
-									else if(strcmp(element.type, "run_in_folder") == 0) {
-										input_str.clear();
-										hide_window();
-										char* result = format_text("start \"\" /d \"%s\" \"%s\"", element.working_dir, element.path);
-										system(result);
 									}
 								}
 							}
@@ -530,8 +572,9 @@ int main(int argc, char** argv)
 					draw_search_bar(&state1_data.input_str, pos - v2(size.x * 0.5f, size.y * 0.5f + g_font_arr[e_font_medium].size), v2(size.x, g_font_arr[e_font_medium].size), e_font_medium, true, 3);
 					if(specific_app_input_result == e_string_input_result_submit) {
 						s_element e = state1_data.element;
-						assert(strcmp(e.type2, "explorer") == 0);
-						char* temp = format_text(e.path, state1_data.input_str.data);
+						assert(e.type.count == 1);
+						assert(strcmp(e.type[0], "explorer") == 0);
+						char* temp = format_text(e.path[0], state1_data.input_str.data);
 						char* result = format_text("explorer \"%s\"", temp);
 						system(result);
 						hide_window();
