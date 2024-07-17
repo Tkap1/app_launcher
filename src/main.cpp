@@ -509,7 +509,7 @@ int main(int argc, char** argv)
 											else {
 												input_str.clear();
 												hide_window();
-												char* result = format_text("explorer \"%s\"", element.path);
+												char* result = format_text("explorer \"%s\"", element.path[step_i]);
 												system(result);
 											}
 										}
