@@ -968,7 +968,7 @@ func int string_similarity(char* needle, char* haystack)
 	int matches = 0;
 
 	// @Note(tkap, 16/05/2023): Bonus if first character matches
-	if(tolower(needle[0] == tolower(haystack[0]))) { score += 1; }
+	if(tolower(needle[0]) == tolower(haystack[0])) { score += 1; }
 
 	while(needle_index < needle_len) {
 		char needle_c = (char)tolower(needle[needle_index]);

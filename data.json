@@ -31,6 +31,10 @@
 		"type": "run",
 		"path": "code \"C:\\Users\\34687\\Desktop\\Dev\\Python\\twitch_bot\""
 	},
+	"open poe filter code": {
+		"type": "run",
+		"path": "code \"C:\\Users\\34687\\Desktop\\Dev\\C\\poe_filter\""
+	},
 	"add command": {
 		"type": "run",
 		"path": "code \"C:\\Users\\34687\\Desktop\\Dev\\C\\app_launcher\\data.json\""
