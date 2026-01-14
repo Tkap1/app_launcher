@@ -48,10 +48,6 @@
 		"working_dir": ["", "C:\\Users\\34687\\Desktop\\Dev\\Python\\twitch_bot"],
 		"path": ["taskkill /F /IM py.exe", "C:\\Users\\34687\\Desktop\\Dev\\Python\\twitch_bot\\src\\main.py"]
 	},
-	"restart chat overlay": {
-		"type": ["run", "run"],
-		"path": ["taskkill /F /IM node.exe", "C:\\Users\\34687\\Desktop\\open_athano_chat.bat"]
-	},
 	"edit path": {
 		"type": "run",
 		"path": "rundll32.exe sysdm.cpl,EditEnvironmentVariables"
@@ -88,14 +84,38 @@
 		"working_dir": "C:\\Users\\34687\\Desktop\\Apps\\ShareX-15.0.0-portable",
 		"path": "C:\\Users\\34687\\Desktop\\Apps\\ShareX-15.0.0-portable\\ShareX.exe"
 	},
+	"ZoomIt": {
+		"type": "run_in_folder",
+		"working_dir": "C:\\Users\\34687\\Downloads\\ZoomIt",
+		"path": "C:\\Users\\34687\\Downloads\\ZoomIt\\ZoomIt64.exe"
+	},
 	"OBS": {
 		"type": "run_in_folder",
 		"working_dir": "C:\\Program Files\\obs-studio\\bin\\64bit",
 		"path": "C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe"
 	},
+	"GitHub Desktop": {
+		"type": "run_in_folder",
+		"working_dir": "C:\\Users\\34687\\AppData\\Local\\GitHubDesktop",
+		"path": "C:\\Users\\34687\\AppData\\Local\\GitHubDesktop\\GitHubDesktop.exe"
+	},
 	"Ditto": {
 		"type": "run_in_folder",
 		"working_dir": "C:\\Users\\34687\\Desktop\\Apps\\Ditto",
 		"path": "C:\\Users\\34687\\Desktop\\Apps\\Ditto\\Ditto.exe"
-	}
+	},
+	"Foobar": {
+		"type": "run_in_folder",
+		"working_dir": "C:\\Users\\34687\\Desktop\\Apps\\foobar2000",
+		"path": "C:\\Users\\34687\\Desktop\\Apps\\foobar2000\\foobar2000.exe"
+	},
+	"edit this json": {
+		"type": "run",
+		"path": "code \"C:\\Users\\34687\\Desktop\\Dev\\C\\app_launcher\\data.json\""
+	},
+	"Renderdoc": {
+		"type": "run_in_folder",
+		"working_dir": "C:\\Program Files\\RenderDoc",
+		"path": "C:\\Program Files\\RenderDoc\\renderdocui.exe"
+	},
 }

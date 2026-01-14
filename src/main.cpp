@@ -17,6 +17,12 @@
 #include "external/stb_truetype.h"
 #pragma warning(pop)
 
+#if 0
+#define malloc(a) malloc(a); printf("malloc %llu bytes at %s:%i\n", (u64)a, __FILE__, __LINE__);
+#define calloc(a, b) calloc(a, b); printf("calloc %llu bytes at %s:%i\n", (u64)(a * b), __FILE__, __LINE__);
+#define free(a) free(a); printf("free at %s:%i\n", __FILE__, __LINE__);
+#endif
+
 #include "config.h"
 #define m_equals(...) = __VA_ARGS__
 #include "shader_shared.h"
@@ -128,9 +134,8 @@ int main(int argc, char** argv)
 	}
 
 	char* class_name = "app_launcher";
-	g_arena = make_lin_arena(100 * c_mb, true);
-
-	g_frame_arena.capacity = 25 * c_mb;
+	g_arena = make_lin_arena(20 * c_mb, true);
+	g_frame_arena.capacity = 10 * c_mb;
 	g_frame_arena.memory = (u8*)g_arena.get(g_frame_arena.capacity);
 
 	init_audio(&g_arena);
@@ -273,21 +278,22 @@ int main(int argc, char** argv)
 
 	RegisterHotKey(g_window, 1, MOD_CONTROL | MOD_SHIFT, key_k);
 
-	g_font_arr[e_font_small] = load_font("assets/consola.ttf", 24, &g_frame_arena);
-	g_font_arr[e_font_medium] = load_font("assets/consola.ttf", 36, &g_frame_arena);
-	g_font_arr[e_font_big] = load_font("assets/consola.ttf", 72, &g_frame_arena);
+	g_font_arr[e_font_small] = load_font("assets/consola.ttf", 24, &g_arena);
+	g_font_arr[e_font_medium] = load_font("assets/consola.ttf", 36, &g_arena);
+	g_font_arr[e_font_big] = load_font("assets/consola.ttf", 72, &g_arena);
 
 	u32 vao;
 	u32 ssbo;
 	u32 program;
 	{
+		g_arena.push();
 		u32 vertex = glCreateShader(GL_VERTEX_SHADER);
 		u32 fragment = glCreateShader(GL_FRAGMENT_SHADER);
 		char* header = "#version 430 core\n";
-		char* vertex_src = read_file_quick("shaders/vertex.vertex", &g_frame_arena);
-		char* fragment_src = read_file_quick("shaders/fragment.fragment", &g_frame_arena);
-		char* vertex_src_arr[] = {header, read_file_quick("src/shader_shared.h", &g_frame_arena), vertex_src};
-		char* fragment_src_arr[] = {header, read_file_quick("src/shader_shared.h", &g_frame_arena), fragment_src};
+		char* vertex_src = read_file_quick("shaders/vertex.vertex", &g_arena);
+		char* fragment_src = read_file_quick("shaders/fragment.fragment", &g_arena);
+		char* vertex_src_arr[] = {header, read_file_quick("src/shader_shared.h", &g_arena), vertex_src};
+		char* fragment_src_arr[] = {header, read_file_quick("src/shader_shared.h", &g_arena), fragment_src};
 		glShaderSource(vertex, array_count(vertex_src_arr), vertex_src_arr, null);
 		glShaderSource(fragment, array_count(fragment_src_arr), fragment_src_arr, null);
 		glCompileShader(vertex);
@@ -300,6 +306,7 @@ int main(int argc, char** argv)
 		glAttachShader(program, fragment);
 		glLinkProgram(program);
 		glUseProgram(program);
+		g_arena.pop();
 	}
 
 	glGenVertexArrays(1, &vao);
@@ -367,9 +374,9 @@ int main(int argc, char** argv)
 		if(read_json) {
 			read_json = false;
 			g_elements.count = 0;
-			char* text = read_file_quick("data.json", &g_arena);
+			char* text = read_file_quick("data.json", &g_frame_arena);
 			assert(text);
-			s_json* json = parse_json(text);
+			s_json* json = parse_json(text, &g_arena);
 			assert(json);
 			json = json->object;
 			for_json(j, json) {
@@ -440,7 +447,7 @@ int main(int argc, char** argv)
 					if(input_result == e_string_input_result_cancel) {
 						hide_window();
 					}
-					s_score_and_index* sorted_elements = (s_score_and_index*)calloc(1, sizeof(s_element) * g_elements.count);
+					s_score_and_index* sorted_elements = (s_score_and_index*)g_frame_arena.get_zero(sizeof(s_element) * g_elements.count);
 					int sorted_elements_count = 0;
 					int min_score = 0;
 					if(input_str.len > 0) { min_score = 1; }
@@ -550,9 +557,6 @@ int main(int argc, char** argv)
 								{.size_multiplier = spacing}
 							);
 						}
-					}
-					if(sorted_elements) {
-						free(sorted_elements);
 					}
 
 				} break;
@@ -814,6 +818,8 @@ func s_v2 get_text_size(char* text, e_font font_id)
 
 func s_font load_font(char* path, float font_size, s_lin_arena* arena)
 {
+	arena->push();
+
 	s_font font = zero;
 	font.size = font_size;
 
@@ -831,8 +837,7 @@ func s_font load_font(char* path, float font_size, s_lin_arena* arena)
 	constexpr int padding = 10;
 	int total_width = padding;
 	int total_height = 0;
-	for(int char_i = 0; char_i < max_chars; char_i++)
-	{
+	for(int char_i = 0; char_i < max_chars; char_i++) {
 		s_glyph glyph = zero;
 		u8* bitmap = stbtt_GetCodepointBitmap(&info, 0, font.scale, char_i, &glyph.width, &glyph.height, 0, 0);
 		stbtt_GetCodepointBox(&info, char_i, &glyph.x0, &glyph.y0, &glyph.x1, &glyph.y1);
@@ -845,18 +850,14 @@ func s_font load_font(char* path, float font_size, s_lin_arena* arena)
 		bitmap_arr.add(bitmap);
 	}
 
-	// @Fixme(tkap, 21/04/2023): Use arena
-	u8* gl_bitmap = (u8*)calloc(1, sizeof(u8) * 4 * total_width * total_height);
+	u8* gl_bitmap = (u8*)arena->get_zero(sizeof(u8) * 4 * total_width * total_height);
 
 	int current_x = padding;
-	for(int char_i = 0; char_i < max_chars; char_i++)
-	{
+	for(int char_i = 0; char_i < max_chars; char_i++) {
 		s_glyph* glyph = &font.glyph_arr[char_i];
 		u8* bitmap = bitmap_arr[char_i];
-		for(int y = 0; y < glyph->height; y++)
-		{
-			for(int x = 0; x < glyph->width; x++)
-			{
+		for(int y = 0; y < glyph->height; y++) {
+			for(int x = 0; x < glyph->width; x++) {
 				u8 src_pixel = bitmap[x + y * glyph->width];
 				u8* dst_pixel = &gl_bitmap[((current_x + x) + (padding + y) * total_width) * 4];
 				dst_pixel[0] = src_pixel;
@@ -888,7 +889,7 @@ func s_font load_font(char* path, float font_size, s_lin_arena* arena)
 		stbtt_FreeBitmap(bitmap, null);
 	}
 
-	free(gl_bitmap);
+	arena->pop();
 
 	return font;
 }

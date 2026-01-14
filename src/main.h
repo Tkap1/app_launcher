@@ -165,7 +165,7 @@ struct s_dynamic_array
 		elements[count++] = new_element;
 	}
 
-	void free()
+	void free_arr()
 	{
 		assert(capacity > 0);
 		::free(elements);

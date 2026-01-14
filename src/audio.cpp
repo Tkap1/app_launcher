@@ -2,35 +2,60 @@
 
 func b8 init_audio(s_lin_arena* arena)
 {
+	arena->push();
+
+	b8 result = false;
 	HRESULT hr;
+
 	hr = CoInitializeEx(null, COINIT_MULTITHREADED);
-	if(FAILED(hr)) { return false; }
-
-	hr = XAudio2Create(&xaudio.xaudio, 0, XAUDIO2_DEFAULT_PROCESSOR);
-	if(FAILED(hr)) { return false; }
-
-	hr = xaudio.xaudio->CreateMasteringVoice(&xaudio.master_voice);
-	if(FAILED(hr)) { return false; }
-	xaudio.master_voice->SetVolume(0.1f);
-
-	WAVEFORMATEX wf = zero;
-	wf.wFormatTag = WAVE_FORMAT_PCM;
-	wf.nChannels = c_num_channels;
-	wf.nSamplesPerSec = c_sample_rate;
-	wf.wBitsPerSample = 16;
-	wf.nBlockAlign = c_num_channels * (wf.wBitsPerSample / 8);
-	wf.nAvgBytesPerSec = c_sample_rate * wf.nBlockAlign;
-
-	xaudio.pop = load_wav("pop.wav", arena);
-
-
-	for(int i = 0; i < c_max_concurrect_sounds; i++) {
-		hr = xaudio.xaudio->CreateSourceVoice(&xaudio.voice_arr[i].voice, &wf, 0, XAUDIO2_DEFAULT_FREQ_RATIO, &xaudio.voice_arr[i]);
-		if(FAILED(hr)) { return false; }
-		xaudio.voice_arr[i].voice->Start(0);
+	b8 do_create = false;
+	if(!FAILED(hr)) {
+		do_create = true;
 	}
 
-	return true;
+	b8 do_mastering_voice = false;
+	if(do_create) {
+		hr = XAudio2Create(&xaudio.xaudio, 0, XAUDIO2_DEFAULT_PROCESSOR);
+		if(!FAILED(hr)) {
+			do_mastering_voice = true;
+		}
+	}
+
+	b8 do_load = false;
+	if(do_mastering_voice) {
+		hr = xaudio.xaudio->CreateMasteringVoice(&xaudio.master_voice);
+		if(!FAILED(hr)) {
+			do_load = true;
+			xaudio.master_voice->SetVolume(0.1f);
+		}
+	}
+
+	if(do_load) {
+		WAVEFORMATEX wf = zero;
+		wf.wFormatTag = WAVE_FORMAT_PCM;
+		wf.nChannels = c_num_channels;
+		wf.nSamplesPerSec = c_sample_rate;
+		wf.wBitsPerSample = 16;
+		wf.nBlockAlign = c_num_channels * (wf.wBitsPerSample / 8);
+		wf.nAvgBytesPerSec = c_sample_rate * wf.nBlockAlign;
+
+		xaudio.pop = load_wav("pop.wav", arena);
+
+		result = true;
+
+		for(int i = 0; i < c_max_concurrect_sounds; i++) {
+			hr = xaudio.xaudio->CreateSourceVoice(&xaudio.voice_arr[i].voice, &wf, 0, XAUDIO2_DEFAULT_FREQ_RATIO, &xaudio.voice_arr[i]);
+			if(FAILED(hr)) {
+				result = false;
+				break;
+			}
+			xaudio.voice_arr[i].voice->Start(0);
+		}
+	}
+
+	arena->pop();
+
+	return result;
 }
 
 func s_sound load_wav(char* path, s_lin_arena* arena)
